@@ -52,6 +52,59 @@ def _save_cookies(client):
 SESSION = _load_cookies()
 
 
+STATUS_DIR = Path(__file__).parent / "status"
+_SCRIPT_TITLE_CACHE = None
+_LOG_LINES = []
+
+
+def _script_title():
+    """Extract title from first comment line of the calling script."""
+    global _SCRIPT_TITLE_CACHE
+    if _SCRIPT_TITLE_CACHE is not None:
+        return _SCRIPT_TITLE_CACHE
+    try:
+        script = Path(sys.argv[0]).resolve()
+        first_line = script.read_text().split("\n", 1)[0]
+        if first_line.startswith("#") and not first_line.startswith("#!"):
+            _SCRIPT_TITLE_CACHE = first_line.lstrip("# ").strip()
+        else:
+            _SCRIPT_TITLE_CACHE = ""
+    except Exception:
+        _SCRIPT_TITLE_CACHE = ""
+    return _SCRIPT_TITLE_CACHE
+
+
+def log(msg):
+    """Log a message to both stdout and the dashboard status file."""
+    print(msg)
+    _LOG_LINES.append(msg)
+
+
+def _write_status(body, data):
+    """Write latest frame to status dir for dashboard. Best-effort, never throws."""
+    try:
+        guid = data.get("guid")
+        if not guid or "frame" not in data:
+            return
+        STATUS_DIR.mkdir(exist_ok=True)
+        experiment = Path(sys.argv[0]).name if sys.argv[0] else "interactive"
+        title = _script_title() or experiment
+        status = {
+            "game_id": (body or {}).get("game_id"),
+            "guid": guid,
+            "frame": data.get("frame"),
+            "state": data.get("state"),
+            "levels_completed": data.get("levels_completed", 0),
+            "experiment": experiment,
+            "title": title,
+            "logs": _LOG_LINES[:],
+            "updated_at": time.time(),
+        }
+        (STATUS_DIR / f"{guid}.json").write_text(json.dumps(status))
+    except Exception:
+        pass
+
+
 def api(method, path, body=None):
     """Call ARC API with retry on rate limit."""
     headers = {"X-API-Key": KEY, "Content-Type": "application/json"}
@@ -65,11 +118,21 @@ def api(method, path, body=None):
             continue
         r.raise_for_status()
         _save_cookies(SESSION)
-        return r.json()
+        data = r.json()
+        _write_status(body, data)
+        return data
     r.raise_for_status()
 
 
 # ── High-level helpers (for generated experiment scripts) ─────────────
+
+def start(game_id):
+    """Open a fresh scorecard, reset the game, return (card_id, obs). Use this in experiment scripts."""
+    card = api("POST", "/api/scorecard/open", {})
+    card_id = card.get("card_id") or card.get("id")
+    obs = api("POST", "/api/cmd/RESET", {"game_id": game_id, "card_id": card_id})
+    return card_id, obs
+
 
 def reset(game_id, card_id, guid=None):
     """Reset game, return obs dict with keys: guid, frame, state, levels_completed, available_actions."""

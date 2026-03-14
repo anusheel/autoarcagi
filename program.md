@@ -14,6 +14,10 @@ writes experiment scripts, analyzes results, updates strategy.
 Give exact commands, not goals. Minimal context — only game_id, card_id, specific facts.
 They don't read/write run.log or strategy.md. Return raw output — Opus does analysis.
 
+**Maximize parallelism.** Launch as many sub-agents as you can in a single message.
+More parallel agents = faster learning. Each agent gets its own scorecard via `start()`,
+so no conflicts.
+
 ## The Loop
 
 ```
@@ -48,6 +52,7 @@ Put scripts in `experiments/`. Import helpers from `play.py`:
 
 | Function | Purpose |
 |---|---|
+| `start(game_id)` | Open scorecard + reset, returns (card_id, obs). Use in scripts. |
 | `reset(game_id, card_id, guid=None)` | Reset game, get obs |
 | `act(action_cmd, game_id, guid, x=None, y=None)` | Single action, get obs |
 | `seq(game_id, guid, "UULLDR")` | Run move string, get list of obs |
@@ -58,8 +63,9 @@ Put scripts in `experiments/`. Import helpers from `play.py`:
 | `grid_summary(grid)` | Value counts |
 | `run_sequences(game_id, card_id, ["UUU", "LLL", ...])` | Batch test sequences |
 | `render(frame_data)` | Text render of frame |
+| `log(msg)` | Print to stdout AND dashboard |
 
-Script guidelines: print structured output, reset between trials, one hypothesis per script, game_id/card_id as constants at top.
+Script guidelines: use `log()` instead of `print()` for results, reset between trials, one hypothesis per script, game_id/card_id as constants at top, first line comment becomes the dashboard title.
 
 ## Commands
 
