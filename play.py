@@ -8,9 +8,10 @@ Usage:
     play.py scorecard-get <card_id>                Get scorecard status
     play.py reset <game_id> <card_id>              Start/reset a game
     play.py action <CMD> <game_id> <guid> [x y]   Take an action (ACTION1-7)
+    play.py explore <game_id> <card_id> [N]        Try N random actions, report changes
 """
 
-import os, sys, json, time
+import os, sys, json, time, random
 import httpx
 
 BASE = "https://three.arcprize.org"
@@ -95,6 +96,43 @@ def main():
             body["y"] = int(sys.argv[6])
         obs = api("POST", f"/api/cmd/{action_cmd}", body)
         print_obs(obs)
+
+    elif cmd == "explore":
+        game_id, card_id = sys.argv[2], sys.argv[3]
+        n = int(sys.argv[4]) if len(sys.argv) > 4 else 50
+        obs = api("POST", "/api/cmd/RESET", {
+            "game_id": game_id, "card_id": card_id, "guid": None,
+        })
+        guid = obs["guid"]
+        actions = obs.get("available_actions", [1, 2, 3, 4])
+        print(f"game:    {game_id}")
+        print(f"guid:    {guid}")
+        print(f"levels:  0/{obs.get('win_levels', '?')}")
+        print(f"actions: {actions}")
+        print(f"initial frame:")
+        print(render(obs.get("frame", [])))
+        print(f"\n--- Exploring {n} random actions ---")
+        best_levels = 0
+        for step in range(n):
+            act = random.choice(actions)
+            body = {"game_id": game_id, "guid": guid}
+            if act == 6:
+                body["x"] = random.randint(0, 63)
+                body["y"] = random.randint(0, 63)
+            obs = api("POST", f"/api/cmd/ACTION{act}", body)
+            state = obs.get("state", "?")
+            levels = obs.get("levels_completed", 0)
+            if levels > best_levels:
+                best_levels = levels
+                xy = f" x={body.get('x')} y={body.get('y')}" if act == 6 else ""
+                print(f"  step {step}: ACTION{act}{xy} -> levels={levels} state={state}")
+            if state in ("WIN", "GAME_OVER"):
+                print(f"  step {step}: ACTION{act} -> {state} levels={levels}")
+                break
+        print(f"\nfinal_state: {obs.get('state', '?')}")
+        print(f"levels_completed: {obs.get('levels_completed', 0)}")
+        print(f"steps: {step + 1}")
+        print(f"best_levels: {best_levels}")
 
     else:
         print(__doc__)
