@@ -1,67 +1,53 @@
 # ARC-AGI-3 Play-Learn Protocol
 
-## Objective
+## Goal
 
-Play each game many times to discover its rules, then use that knowledge to win.
-The games have NO instructions by design — you must explore and learn.
-**Speed is critical.** The faster you play, the faster you learn.
+Complete ALL levels in ALL games using the minimum total number of actions.
+You learn the rules by playing — there are no instructions.
+
+## Mindset
+
+You are a player learning a new game. You will play many times.
+Each play teaches you something. Deaths, resets, timer expiry — all fine.
+Knowledge accumulates across plays. Once you understand the rules,
+you execute the optimal strategy.
+
+**Do not try to solve a game in one attempt.** Play, learn, play again.
 
 ## The Loop
 
 ```
 FOREVER:
-  1. Pick a game
-  2. Open scorecard, reset game
-  3. PLAY: take actions, observe what changes
-  4. Game ends (WIN, GAME_OVER, or timer expires)
-  5. LEARN: append observations to run.log
-  6. If you discovered something new, update strategy.md and commit
-  7. Go to 1
+  1. Read run.log — what do you know? what's the next experiment?
+  2. Pick a game and play it
+  3. Observe: what changed? what did each action do?
+  4. Log to run.log: what you tried, what happened, what you learned
+  5. If you confirmed something new, update strategy.md and commit
+  6. Go to 1
 ```
 
-## run.log
+## What to Learn (per game)
 
-Append after every play session. Keep it terse:
-- What you tried
-- What happened (positions, cell changes, level transitions)
-- What you learned
-- What to try next
-
-This is your working memory between plays. Review it before each new attempt.
-
-## strategy.md
-
-Confirmed knowledge only. For each game, record:
-- What each action does
-- What objects exist and how they behave
-- Win condition
-- Level-specific strategies and action sequences
-- Map of corridors/paths/walls
-
-Commit when you learn something significant.
+- What does each available action do?
+- What objects are on the grid? Which move, which are fixed?
+- What is the win condition? What triggers level completion?
+- What is the map/layout? Where can you go, where are walls?
+- Are there pickups, triggers, special zones?
+- What's the minimum action sequence to complete each level?
 
 ## How to Play Fast
 
-- Use `seq` for known sequences (one API call per action, but fast output)
-- For exploration: individual actions, check the diff
-- Don't render full frames — filter for rows that matter
-- Track positions numerically via block/cross coordinates
-- Reset freely — timer expiry is fine, you keep your knowledge
-
-## Frame Analysis
-
-- 0-2 cells changed = wall hit (blocked)
-- ~50 cells changed = normal movement
-- ~100+ cells changed = special event (cross overlap, pickup)
-- ~200 cells changed = timer expired (life lost, level resets)
-- 1000+ cells changed = level transition
+- `seq` command runs action strings in one call — use it
+- Don't print full frames — grep for positions and cell changes
+- Each action = one API call. Minimize wasted actions per play.
+- Reset freely. Each reset is cheap. Playing the wrong path is expensive.
 
 ## Files
 
-- **strategy.md** — Confirmed knowledge (committed)
-- **run.log** — Working observations (gitignored)
-- **play.py** — CLI tool (modify if needed)
-- **program.md** — This file (do not modify)
+- **run.log** — Working memory. Append after every play. Review before next play.
+- **strategy.md** — Confirmed knowledge. Commit when you learn something real.
+- **play.py** — CLI tool. Modify if you need better output.
+- **program.md** — This file. Do not modify.
 
 ## NEVER STOP
 
