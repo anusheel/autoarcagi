@@ -18,13 +18,30 @@ you execute the optimal strategy.
 
 ```
 FOREVER:
-  1. Read run.log — what do you know? what's the next experiment?
-  2. Pick a game and play it
-  3. Observe: what changed? what did each action do?
-  4. Log to run.log: what you tried, what happened, what you learned
-  5. If you confirmed something new, update strategy.md and commit
-  6. Go to 1
+  1. Read run.log and strategy.md — what do you know? what's still unknown?
+  2. Pick a game to focus on
+  3. Identify 2-4 hypotheses to test about that game
+  4. Launch parallel agents — one per hypothesis — each plays independently
+  5. Merge their findings into run.log
+  6. Update strategy.md with confirmed discoveries, commit
+  7. Go to 1
 ```
+
+## Parallel Hypothesis Testing
+
+Focus on ONE game at a time. For each learning round, launch multiple
+agents in parallel, each testing a different hypothesis about the same game.
+
+Example for a movement puzzle:
+- Agent A: "What happens if I go LEFT from every row?" → maps corridors
+- Agent B: "Where is the display box?" → reads the frame
+- Agent C: "Can I reach X from Y via the bottom?" → tests a route
+
+Each agent gets its own scorecard and session (independent API state).
+Each agent reports back: what it tried, what it observed, what it learned.
+You merge all findings, update strategy, and plan the next round.
+
+This multiplies your learning rate — 3 agents = 3x the experiments per round.
 
 ## What to Learn (per game)
 
