@@ -1,82 +1,69 @@
 # ARC-AGI-3 Game Strategy
 
 This is the mutable strategy file. **This is what gets iterated on during the research loop.**
-Read this before playing any game. Update it with learnings after each evaluation round.
 
 ## General Approach
 
-1. **Observe the initial frame carefully**: Note grid dimensions, colors, distinct regions,
-   borders, and any patterns (symmetry, shapes, corridors).
+1. **Classify the game** by available actions and frame layout
+2. **Explore systematically** — try each action once, track frame diffs
+3. **Form a hypothesis** about the win condition within 5-10 actions
+4. **Execute purposefully** once you have a model
+5. **Track progress** — watch levels_completed, state changes, indicators
 
-2. **Identify the game type from available actions**:
-   - Actions [1,2,3,4] only → directional movement/sliding puzzle
-   - Action [6] only → click-based puzzle
-   - Actions [1-6] → hybrid (movement + click + interact)
+## LS20: Pattern Rotation Puzzle (SOLVED)
 
-3. **Explore systematically**: Try each available action once. After each action,
-   compare the frame diff to understand what changed. Focus on:
-   - What moved? (position changes)
-   - What appeared/disappeared? (state changes)
-   - Did any counter/indicator change? (progress tracking)
+**Actions**: [1,2,3,4] = UP/DOWN/LEFT/RIGHT. Block moves 5 cells per action.
 
-4. **Build a mental model fast**: After 5-10 exploratory actions, form a hypothesis
-   about the objective. Look for:
-   - Reference/target patterns (bordered boxes showing what to match)
-   - Movable objects vs static background
-   - Progress indicators (header bars, counters)
+**Elements**:
+- **Block**: Purple(c) + Maroon(9), 5x5, the thing you control
+- **Cross marker**: The 1/. pattern at rows 31-33 — fixed trigger point
+- **Upper display**: Bordered box at rows 8-16 — shows TARGET pattern
+- **Lower-left display**: Box at rows 53-62 — shows CURRENT pattern (rotates)
+- **Progress bar**: Bottom-right area — TIMER that depletes 1 col per action
+- **Teal rings**: Time pickups that extend the progress bar by ~11 cols
+- **Cyan indicators**: Lives — losing timer = lose a life
 
-5. **Act purposefully once you have a model**.
+**Win condition (confirmed)**:
+1. Navigate block to cross marker and overlap it
+2. Each overlap rotates the lower-left pattern 90° CW
+3. Rotate until lower-left matches upper display target
+4. When matched, display borders turn BLACK (passable)
+5. Navigate block INTO the upper display through black borders
+6. Entering display interior = level completion (1000+ cells change)
 
-6. **Use undo (ACTION7)** if available and an action makes things worse.
+**Level 1 procedure** (~16 actions):
+- Block starts rows 45-49, cross at rows 31-33 cols 20-22
+- Route: 4 UP + 4 LEFT → reach cross area
+- 1 DOWN onto cross → rotation (1 needed for L1)
+- 1 UP off cross
+- Navigate RIGHT and UP to upper display at rows 8-16
+- Enter through black borders → level complete
 
-## Game-Specific Observations
+**Level 2 notes**:
+- Larger maze with internal walls, 3 rotations needed
+- Teal ring pickups available for timer extension
+- Border toggle rule may differ per level but ALWAYS black when matched
 
-### LS20 (actions: [1,2,3,4], levels: 0/7)
-- **Type**: Maze/sliding puzzle
-- **Movable object**: A colored block (ccccc/99999, 5 wide × 5 tall)
-- **Mechanics**: Block slides through green (3) maze corridors. Movement follows
-  corridors, not just straight lines — pressing UP may also shift horizontally.
-- **Reference pattern**: Bordered box at rows 8-16 with 9-pattern inside
-- **Player marker**: 1/. pattern at rows 31-32 (doesn't move with actions?)
-- **Trail**: Each movement adds green (3) pixels at bottom of frame
-- **No GAME_OVER**: Can't lose from bad moves (100 random actions survived)
-- **TODO**: Figure out what the actual win condition is. Navigate block to match
-  the reference pattern? Or navigate player to exit?
+## VC33: Click Puzzle (UNSOLVED)
 
-### VC33 (actions: [6], levels: 0/7)
-- **Type**: Click puzzle
-- **Layout**: Left green (3) area, right empty, purple (5) band with bb markers
-  at rows 28-31, yellow (9) markers, arrow-shaped 44bb objects
-- **Header bar**: Row 0 tracks progress (7 → 4 replacement from right)
-- **Clicking bb in purple band**: Progresses header, changes green area dimensions
-- **Clicking other areas**: May undo progress
-- **CAN GAME_OVER**: Hit GAME_OVER at step 96 during random clicking
-- **TODO**: Find the correct click sequence. Maybe need to click specific targets
-  in order? Header bar might indicate level progress.
+**Actions**: [6] = click only
+- Clicking bb in purple band progresses header bar
+- Can GAME_OVER from wrong clicks
+- Need to understand actual win condition
+- **TODO**: Try clicking in specific order, track header bar progress
 
-### FT09 (actions: [1,2,3,4,5,6], levels: 0/6)
-- **Type**: Tile puzzle (hybrid actions)
-- **Layout**: 3×3 grid of colored tiles on left, bordered grid on right
-- **Tiles**: Yellow (9) and blue (8) blocks, dotted patterns (./2/8 symbols)
-- **Left vs right**: Similar but not identical patterns — possible matching goal
-- **Status bar**: Row 63 is all 'c', changes slightly with actions (bb at end)
-- **ACTION5**: Minimal visible effect (changed 2 chars in status bar)
-- **CAN GAME_OVER**: Hit at step 67 during random play
-- **TODO**: Figure out tile interaction. Maybe need to swap/rotate tiles on left
-  to match right pattern?
+## FT09: Tile Puzzle (UNSOLVED)
 
-## Action Reference
+**Actions**: [1,2,3,4,5,6] = all available
+- Grid of colored tiles (yellow=9, blue=8) on both sides
+- Dotted patterns may be rotatable/swappable
+- Can GAME_OVER from bad moves
+- **TODO**: Classify tile interaction type, try ACTION5 with different positions
 
-- ACTION1: Up / primary
-- ACTION2: Down / secondary
-- ACTION3: Left
-- ACTION4: Right
-- ACTION5: Select / interact / rotate
-- ACTION6: Click at (x, y) coordinates 0-63
-- ACTION7: Undo
+## Cross-Game Patterns
 
-## Frame Reading
-
-- `.` (0) = black/empty background
-- `1-f` = colors (hex digits, 1-15)
-- Grid: 64×64, rows shown as `YY|cells...` (only non-empty rows displayed)
+- **Wall hit**: 0-2 cells changed (vs normal ~52 for 5x5 block)
+- **Level transition**: 1000+ cells changed
+- **Progress bars**: Usually timers (depleting = bad), not goals
+- **Color 0 (black)**: Often passable borders or empty space
+- **Loop detection**: If repeating same 2-4 actions, STOP and rethink
