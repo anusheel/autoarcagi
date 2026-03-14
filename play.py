@@ -205,18 +205,24 @@ def main():
             state = obs.get("state", "?")
             levels = obs.get("levels_completed", 0)
             # Find block (5 consecutive val=12 in a row) and cross (val=1)
-            # Use LAST frame only (API may return animation frames)
+            # Check ALL frames for block positions
             all_frames = obs.get("frame", [[]])
             frame_count = len(all_frames)
+            # Collect block positions per frame
+            per_frame_blocks = []
+            for fi, fr in enumerate(all_frames):
+                fb = []
+                for y, row in enumerate(fr):
+                    for x in range(len(row) - 4):
+                        if all(row[x+j] == 12 for j in range(5)):
+                            fb.append((y, x))
+                            break
+                per_frame_blocks.append(fb)
             f = all_frames[-1] if all_frames else []
-            blocks = []  # all ccccc positions
+            blocks = per_frame_blocks[-1] if per_frame_blocks else []
             cross_r, cross_c = -1, -1
             cells_changed = 0
             for y, row in enumerate(f):
-                for x in range(len(row) - 4):
-                    if all(row[x+j] == 12 for j in range(5)):
-                        blocks.append((y, x))
-                        break  # one per row
                 for x, val in enumerate(row):
                     if val == 1 and cross_r == -1:
                         cross_r, cross_c = y, x
@@ -228,7 +234,15 @@ def main():
             prev_frame = f
             dist = abs(blk_r - cross_r) + abs(blk_c - cross_c) if blk_r >= 0 and cross_r >= 0 else -1
             blk_str = " ".join(f"({r},{c})" for r,c in blocks)
-            print(f"{i+1:3d}. {m} -> lvl={levels} blocks=[{blk_str}] cross=({cross_r},{cross_c}) chg={cells_changed}")
+            # Show per-frame block info if multiple frames
+            frame_info = ""
+            if frame_count > 1:
+                frame_parts = []
+                for fi, fb in enumerate(per_frame_blocks):
+                    pos = fb[0] if fb else (-1,-1)
+                    frame_parts.append(f"f{fi}=({pos[0]},{pos[1]})")
+                frame_info = f" frames={frame_count} [{' '.join(frame_parts)}]"
+            print(f"{i+1:3d}. {m} -> lvl={levels} blocks=[{blk_str}] cross=({cross_r},{cross_c}) chg={cells_changed}{frame_info}")
             # prev_frame already set above to f (the last frame's 2D grid)
             if state in ("WIN", "GAME_OVER"):
                 print(f"     {state}!")
