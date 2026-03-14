@@ -43,6 +43,11 @@ You merge all findings, update strategy, and plan the next round.
 
 This multiplies your learning rate — 3 agents = 3x the experiments per round.
 
+**How many agents?** One per independent hypothesis. Early exploration (many
+unknowns) → more agents. Later execution (sequential dependencies) → fewer.
+ARC API rate limit is 600 requests/minute — you can comfortably run 4-5
+parallel agents without hitting it. Go hard when there are many open questions.
+
 ## What to Learn (per game)
 
 - What does each available action do?
