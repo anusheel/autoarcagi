@@ -1,30 +1,25 @@
 #!/usr/bin/env python3
-"""ARC-AGI-3 game player. Uses Claude to reason about frames and pick actions.
+"""ARC-AGI-3 API client. Thin CLI wrapper for Claude Code to call.
 
-This is the ONLY file modified during the autoresearch loop.
+Usage:
+    play.py games                                  List available games
+    play.py scorecard-open                         Open a new scorecard
+    play.py scorecard-close <card_id>              Close scorecard, get results
+    play.py scorecard-get <card_id>                Get scorecard status
+    play.py reset <game_id> <card_id>              Start/reset a game
+    play.py action <CMD> <game_id> <guid> [x y]   Take an action (ACTION1-7)
 """
 
 import os, sys, json, time
-import httpx, anthropic
+import httpx
 
-# === Configuration ===
-MODEL = "claude-sonnet-4-6"  # reasoning model
-EVAL_GAMES = 5               # games per evaluation run
-MAX_STEPS = 200              # max actions per game
-
-SYSTEM_PROMPT = """\
-You are playing an ARC-AGI-3 interactive grid game.
-Your goal is to figure out the game's rules and complete all levels.
-Analyze the grid carefully. Track what changes between frames. Act strategically.
-When unsure, try different actions to learn the game mechanics."""
-
-# === ARC API ===
 BASE = "https://three.arcprize.org"
 KEY = os.environ["ARC_API_KEY"]
 
 
-def api(session, method, path, body=None):
+def api(method, path, body=None):
     """Call ARC API with retry on rate limit."""
+    session = httpx.Client(timeout=60)
     headers = {"X-API-Key": KEY, "Content-Type": "application/json"}
     for attempt in range(3):
         if method == "GET":
@@ -39,11 +34,12 @@ def api(session, method, path, body=None):
     r.raise_for_status()
 
 
-# === Frame rendering ===
 def render(frame_data):
     """Render frame as compact text grid. Skip all-zero rows."""
     lines = []
-    for frame in frame_data:
+    for fi, frame in enumerate(frame_data):
+        if len(frame_data) > 1:
+            lines.append(f"--- Frame {fi} ---")
         for y, row in enumerate(frame):
             if any(v != 0 for v in row):
                 cells = ["." if v == 0 else hex(v)[2:] for v in row]
@@ -51,112 +47,58 @@ def render(frame_data):
     return "\n".join(lines) or "(empty)"
 
 
-# === Claude reasoning ===
-def pick_action(claude, frame, actions, game_id, levels, history):
-    """Ask Claude to pick the next action."""
-    hist = "\n".join(f"  {h}" for h in history[-15:])
-    msg = f"""\
-Game: {game_id} | Levels completed: {levels}
-Available actions: {actions}
-
-Frame (. = black/empty, 1-f = colors):
-{render(frame)}
-
-{"Recent history:\n" + hist if hist else ""}
-
-What action? Reply ONLY: ACTION<N> or ACTION6 <x> <y>"""
-
-    resp = claude.messages.create(
-        model=MODEL, max_tokens=256, system=SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": msg}],
-    )
-    text = resp.content[0].text.strip()
-
-    # Parse last ACTION line in response
-    for line in reversed(text.split("\n")):
-        if "ACTION" in line:
-            parts = line.split("ACTION")[-1].strip().split()
-            try:
-                n = int(parts[0])
-                if n == 6 and len(parts) >= 3:
-                    x = int(parts[1].strip("x=,"))
-                    y = int(parts[2].strip("y=,"))
-                    return f"ACTION6", {"x": x, "y": y}
-                return f"ACTION{n}", {}
-            except (ValueError, IndexError):
-                pass
-    return f"ACTION{actions[0]}", {}  # fallback
+def print_obs(obs):
+    """Print observation in a readable format."""
+    print(f"state:   {obs.get('state', '?')}")
+    print(f"levels:  {obs.get('levels_completed', 0)}/{obs.get('win_levels', '?')}")
+    print(f"guid:    {obs.get('guid', '?')}")
+    print(f"actions: {obs.get('available_actions', [])}")
+    print(f"frame:")
+    print(render(obs.get("frame", [])))
 
 
-# === Game loop ===
-def play(game_id, card_id, session, claude):
-    """Play one game. Returns (levels_completed, state, steps)."""
-    obs = api(session, "POST", "/api/cmd/RESET",
-              {"game_id": game_id, "card_id": card_id, "guid": None})
-    guid = obs["guid"]
-    history = []
-
-    for step in range(MAX_STEPS):
-        state = obs.get("state", "NOT_FINISHED")
-        levels = obs.get("levels_completed", 0)
-        if state in ("WIN", "GAME_OVER"):
-            return levels, state, step
-
-        cmd, kwargs = pick_action(
-            claude, obs.get("frame", []),
-            obs.get("available_actions", [1, 2, 3, 4]),
-            game_id, levels, history,
-        )
-        body = {"game_id": game_id, "guid": guid, **kwargs}
-        obs = api(session, "POST", f"/api/cmd/{cmd}", body)
-        history.append(
-            f"step{step}: {cmd}"
-            + (f" {kwargs}" if kwargs else "")
-            + f" -> {obs.get('state', '?')} lvl={obs.get('levels_completed', 0)}"
-        )
-
-    return obs.get("levels_completed", 0), "MAX_STEPS", MAX_STEPS
-
-
-# === Main ===
 def main():
-    session = httpx.Client(timeout=60)
-    claude = anthropic.Anthropic()
+    cmd = sys.argv[1]
 
-    games = api(session, "GET", "/api/games")
-    eval_set = games[:EVAL_GAMES]
-    sc = api(session, "POST", "/api/scorecard/open", {})
-    card_id = sc["card_id"]
+    if cmd == "games":
+        games = api("GET", "/api/games")
+        for g in games:
+            gid = g["game_id"] if isinstance(g, dict) else g
+            title = g.get("title", "") if isinstance(g, dict) else ""
+            print(f"{gid}  {title}")
 
-    results = []
-    for g in eval_set:
-        gid = g["game_id"] if isinstance(g, dict) else g
-        name = g.get("title", gid) if isinstance(g, dict) else gid
-        print(f"Playing {name}...", end=" ", flush=True)
-        try:
-            lvl, state, steps = play(gid, card_id, session, claude)
-            print(f"{state} levels={lvl} steps={steps}")
-            results.append((gid, lvl, state, steps))
-        except Exception as e:
-            print(f"ERROR: {e}")
-            results.append((gid, 0, "ERROR", 0))
+    elif cmd == "scorecard-open":
+        r = api("POST", "/api/scorecard/open", {})
+        print(json.dumps(r))
 
-    try:
-        api(session, "POST", "/api/scorecard/close", {"card_id": card_id})
-    except Exception:
-        pass
+    elif cmd == "scorecard-close":
+        r = api("POST", "/api/scorecard/close", {"card_id": sys.argv[2]})
+        print(json.dumps(r, indent=2))
 
-    wins = sum(1 for _, _, s, _ in results if s == "WIN")
-    total = sum(l for _, l, _, _ in results)
-    n = len(results)
+    elif cmd == "scorecard-get":
+        r = api("GET", f"/api/scorecard/{sys.argv[2]}")
+        print(json.dumps(r, indent=2))
 
-    print(f"\nwin_rate:    {wins / n:.4f}")
-    print(f"avg_levels:  {total / n:.2f}")
-    print(f"total_levels:{total}")
-    print(f"wins:        {wins}")
-    print(f"games:       {n}")
-    for gid, lvl, state, steps in results:
-        print(f"  {gid}: {state} levels={lvl} steps={steps}")
+    elif cmd == "reset":
+        game_id, card_id = sys.argv[2], sys.argv[3]
+        guid = sys.argv[4] if len(sys.argv) > 4 else None
+        obs = api("POST", "/api/cmd/RESET", {
+            "game_id": game_id, "card_id": card_id, "guid": guid,
+        })
+        print_obs(obs)
+
+    elif cmd == "action":
+        action_cmd, game_id, guid = sys.argv[2], sys.argv[3], sys.argv[4]
+        body = {"game_id": game_id, "guid": guid}
+        if action_cmd == "ACTION6" and len(sys.argv) >= 7:
+            body["x"] = int(sys.argv[5])
+            body["y"] = int(sys.argv[6])
+        obs = api("POST", f"/api/cmd/{action_cmd}", body)
+        print_obs(obs)
+
+    else:
+        print(__doc__)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
