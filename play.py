@@ -18,19 +18,47 @@ BASE = "https://three.arcprize.org"
 KEY = os.environ["ARC_API_KEY"]
 
 
+import pickle
+from pathlib import Path
+
+COOKIE_FILE = Path(__file__).parent / ".cookies"
+
+
+def _load_cookies():
+    """Load cookies from file for session persistence across processes."""
+    if COOKIE_FILE.exists():
+        try:
+            jar = pickle.loads(COOKIE_FILE.read_bytes())
+            return httpx.Client(timeout=60, cookies=jar)
+        except Exception:
+            pass
+    return httpx.Client(timeout=60)
+
+
+def _save_cookies(client):
+    """Save cookies to file."""
+    try:
+        COOKIE_FILE.write_bytes(pickle.dumps(dict(client.cookies)))
+    except Exception:
+        pass
+
+
+SESSION = _load_cookies()
+
+
 def api(method, path, body=None):
     """Call ARC API with retry on rate limit."""
-    session = httpx.Client(timeout=60)
     headers = {"X-API-Key": KEY, "Content-Type": "application/json"}
     for attempt in range(3):
         if method == "GET":
-            r = session.get(f"{BASE}{path}", headers=headers)
+            r = SESSION.get(f"{BASE}{path}", headers=headers)
         else:
-            r = session.post(f"{BASE}{path}", headers=headers, json=body or {})
+            r = SESSION.post(f"{BASE}{path}", headers=headers, json=body or {})
         if r.status_code == 429:
             time.sleep(2 ** attempt)
             continue
         r.raise_for_status()
+        _save_cookies(SESSION)
         return r.json()
     r.raise_for_status()
 
