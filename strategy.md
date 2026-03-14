@@ -41,8 +41,21 @@ This is the mutable strategy file. **This is what gets iterated on during the re
 
 **Level 2 notes**:
 - Larger maze with internal walls, 3 rotations needed
-- Teal ring pickups available for timer extension
-- Border toggle rule may differ per level but ALWAYS black when matched
+- Block starts at ~(35,34) in a vertical corridor at col 34
+- Cross at (47,50) — need to navigate RIGHT to col 50 and DOWN to row 47
+- CRITICAL: col 34 corridor has walls on LEFT and RIGHT at rows 15-44
+- Must navigate UP to top highway (rows 5-9) where corridor is fully open
+- Then RIGHT across the top, then DOWN through vertical corridors
+- The block at (15,34) oscillates — getting past row 15 requires understanding the maze
+- Route: UP to top → RIGHT across → DOWN to cross area
+- 2 teal ring markers available for timer extension
+- Baseline: 41 actions. Timer is tight — need efficient routing
+
+**Action economy**:
+- Every OTHER action actually moves the block (odd=move, even=no-move)
+- So 41 baseline = ~20 effective moves
+- Each wasted action costs 2 timer cells
+- Plan route BEFORE moving to minimize total actions
 
 ## VC33: Click Puzzle (UNSOLVED)
 
