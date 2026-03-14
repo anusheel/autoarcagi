@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""ARC-AGI-3 API client. Thin CLI wrapper for Claude Code to call.
+"""ARC-AGI-3 API client and exploration library.
 
-Usage:
+CLI usage:
     play.py games                                  List available games
     play.py scorecard-open                         Open a new scorecard
     play.py scorecard-close <card_id>              Close scorecard, get results
@@ -9,19 +9,25 @@ Usage:
     play.py reset <game_id> <card_id>              Start/reset a game
     play.py action <CMD> <game_id> <guid> [x y]   Take an action (ACTION1-7)
     play.py explore <game_id> <card_id> [N]        Try N random actions, report changes
+    play.py run-experiment <script.py>             Run a generated experiment script
+
+Importable API (for generated experiment scripts):
+    from play import api, render, reset, act, seq, find_objects, diff_frames, frame_to_grid
 """
 
 import os, sys, json, time, random
+import pickle
+from pathlib import Path
+
 import httpx
 
 BASE = "https://three.arcprize.org"
 KEY = os.environ["ARC_API_KEY"]
 
-
-import pickle
-from pathlib import Path
-
 COOKIE_FILE = Path(__file__).parent / ".cookies"
+ACTION_MAP = {"U": "ACTION1", "D": "ACTION2", "L": "ACTION3", "R": "ACTION4",
+              "S": "ACTION5", "X": "ACTION7"}
+ACTION_NAMES = {1: "U", 2: "D", 3: "L", 4: "R", 5: "S", 6: "C", 7: "X"}
 
 
 def _load_cookies():
@@ -61,6 +67,117 @@ def api(method, path, body=None):
         _save_cookies(SESSION)
         return r.json()
     r.raise_for_status()
+
+
+# ── High-level helpers (for generated experiment scripts) ─────────────
+
+def reset(game_id, card_id, guid=None):
+    """Reset game, return obs dict with keys: guid, frame, state, levels_completed, available_actions."""
+    return api("POST", "/api/cmd/RESET", {"game_id": game_id, "card_id": card_id, "guid": guid})
+
+
+def act(action_cmd, game_id, guid, x=None, y=None):
+    """Execute a single action. action_cmd is e.g. 'ACTION1' or 'U'/'D'/'L'/'R'/'S'/'X'.
+    Returns obs dict."""
+    if action_cmd in ACTION_MAP:
+        action_cmd = ACTION_MAP[action_cmd]
+    body = {"game_id": game_id, "guid": guid}
+    if x is not None and y is not None:
+        body["x"], body["y"] = int(x), int(y)
+    return api("POST", f"/api/cmd/{action_cmd}", body)
+
+
+def seq(game_id, guid, moves):
+    """Execute a sequence of moves (e.g. 'UUULLDR'). Returns list of obs dicts."""
+    results = []
+    for m in moves.upper():
+        cmd = ACTION_MAP.get(m)
+        if not cmd:
+            continue
+        obs = api("POST", f"/api/cmd/{cmd}", {"game_id": game_id, "guid": guid})
+        results.append(obs)
+        if obs.get("state") in ("WIN", "GAME_OVER"):
+            break
+    return results
+
+
+def frame_to_grid(obs):
+    """Extract the last frame from obs as a 2D list of ints."""
+    frames = obs.get("frame", [[]])
+    return frames[-1] if frames else []
+
+
+def find_objects(grid, val):
+    """Find all cells with a given value. Returns list of (row, col)."""
+    positions = []
+    for r, row in enumerate(grid):
+        for c, v in enumerate(row):
+            if v == val:
+                positions.append((r, c))
+    return positions
+
+
+def find_blob(grid, val, min_size=3):
+    """Find the bounding box of the largest connected region of val.
+    Returns (min_row, min_col, max_row, max_col) or None."""
+    positions = find_objects(grid, val)
+    if len(positions) < min_size:
+        return None
+    return (min(r for r, c in positions), min(c for r, c in positions),
+            max(r for r, c in positions), max(c for r, c in positions))
+
+
+def diff_frames(grid_a, grid_b):
+    """Compare two grids, return dict of {(row, col): (old_val, new_val)} for changed cells."""
+    changes = {}
+    for r in range(min(len(grid_a), len(grid_b))):
+        for c in range(min(len(grid_a[r]), len(grid_b[r]))):
+            if grid_a[r][c] != grid_b[r][c]:
+                changes[(r, c)] = (grid_a[r][c], grid_b[r][c])
+    return changes
+
+
+def grid_summary(grid):
+    """Return a compact summary: unique values and their counts."""
+    counts = {}
+    for row in grid:
+        for v in row:
+            counts[v] = counts.get(v, 0) + 1
+    return dict(sorted(counts.items()))
+
+
+def run_sequences(game_id, card_id, sequences):
+    """Run multiple move sequences, resetting between each. Returns list of result dicts.
+    Each result: {seq, levels, state, final_grid_summary, changes_per_step}."""
+    results = []
+    obs = reset(game_id, card_id)
+    guid = obs["guid"]
+    for s in sequences:
+        obs = reset(game_id, card_id, guid)
+        guid = obs["guid"]
+        initial_grid = frame_to_grid(obs)
+        prev_grid = initial_grid
+        step_changes = []
+        final_obs = obs
+        for m in s.upper():
+            cmd = ACTION_MAP.get(m)
+            if not cmd:
+                continue
+            final_obs = api("POST", f"/api/cmd/{cmd}", {"game_id": game_id, "guid": guid})
+            cur_grid = frame_to_grid(final_obs)
+            n_changed = len(diff_frames(prev_grid, cur_grid))
+            step_changes.append(n_changed)
+            prev_grid = cur_grid
+            if final_obs.get("state") in ("WIN", "GAME_OVER"):
+                break
+        results.append({
+            "seq": s,
+            "levels": final_obs.get("levels_completed", 0),
+            "state": final_obs.get("state", "?"),
+            "final_grid_summary": grid_summary(frame_to_grid(final_obs)),
+            "changes_per_step": step_changes,
+        })
+    return results
 
 
 def render(frame_data):
@@ -299,6 +416,21 @@ def main():
         print(f"\nbest_levels: {best_levels}")
         print(f"best_seq:    {best_seq}")
         print(f"trials:      {tried}")
+
+    elif cmd == "run-experiment":
+        # Run a generated experiment script
+        # Usage: play.py run-experiment <script.py>
+        script_path = sys.argv[2]
+        import subprocess
+        result = subprocess.run(
+            [sys.executable, script_path],
+            capture_output=True, text=True, timeout=300,
+            env={**os.environ, "PYTHONPATH": str(Path(__file__).parent)},
+        )
+        print(result.stdout)
+        if result.stderr:
+            print("STDERR:", result.stderr, file=sys.stderr)
+        sys.exit(result.returncode)
 
     elif cmd == "explore":
         game_id, card_id = sys.argv[2], sys.argv[3]
