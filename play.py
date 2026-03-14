@@ -167,7 +167,7 @@ def main():
         moves = sys.argv[4].upper()
         action_map = {"U": "ACTION1", "D": "ACTION2", "L": "ACTION3", "R": "ACTION4",
                        "S": "ACTION5", "X": "ACTION7"}
-        prev_frame = None
+        prev_frame = None  # will be set to last frame's 2D grid
         for i, m in enumerate(moves):
             act = action_map.get(m)
             if not act:
@@ -177,26 +177,31 @@ def main():
             state = obs.get("state", "?")
             levels = obs.get("levels_completed", 0)
             # Find block (5 consecutive val=12 in a row) and cross (val=1)
-            frame = obs.get("frame", [[]])
-            blk_r, blk_c, cross_r, cross_c = -1, -1, -1, -1
+            # Use LAST frame only (API may return animation frames)
+            all_frames = obs.get("frame", [[]])
+            frame_count = len(all_frames)
+            f = all_frames[-1] if all_frames else []
+            blocks = []  # all ccccc positions
+            cross_r, cross_c = -1, -1
             cells_changed = 0
-            for fi, f in enumerate(frame):
-                for y, row in enumerate(f):
-                    # Find block: 5 consecutive pixels of value 12
-                    for x in range(len(row) - 4):
-                        if blk_r == -1 and all(row[x+j] == 12 for j in range(5)):
-                            blk_r, blk_c = y, x
-                    # Find cross: value 1 surrounded by value 0
-                    for x, val in enumerate(row):
-                        if val == 1 and cross_r == -1:
-                            cross_r, cross_c = y, x
-                        if prev_frame and fi < len(prev_frame):
-                            if y < len(prev_frame[fi]) and x < len(prev_frame[fi][y]):
-                                if val != prev_frame[fi][y][x]:
-                                    cells_changed += 1
+            for y, row in enumerate(f):
+                for x in range(len(row) - 4):
+                    if all(row[x+j] == 12 for j in range(5)):
+                        blocks.append((y, x))
+                        break  # one per row
+                for x, val in enumerate(row):
+                    if val == 1 and cross_r == -1:
+                        cross_r, cross_c = y, x
+                    if prev_frame and y < len(prev_frame) and x < len(prev_frame[y]):
+                        if val != prev_frame[y][x]:
+                            cells_changed += 1
+            blk_r = blocks[0][0] if blocks else -1
+            blk_c = blocks[0][1] if blocks else -1
+            prev_frame = f
             dist = abs(blk_r - cross_r) + abs(blk_c - cross_c) if blk_r >= 0 and cross_r >= 0 else -1
-            print(f"{i+1:3d}. {m} -> lvl={levels} blk=({blk_r},{blk_c}) cross=({cross_r},{cross_c}) dist={dist} changed={cells_changed}")
-            prev_frame = frame
+            blk_str = " ".join(f"({r},{c})" for r,c in blocks)
+            print(f"{i+1:3d}. {m} -> lvl={levels} blocks=[{blk_str}] cross=({cross_r},{cross_c}) chg={cells_changed}")
+            # prev_frame already set above to f (the last frame's 2D grid)
             if state in ("WIN", "GAME_OVER"):
                 print(f"     {state}!")
                 break
