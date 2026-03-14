@@ -1,88 +1,77 @@
-# ARC-AGI-3 Autonomous Research Program
+# ARC-AGI-3 Play-Learn Protocol
 
-## Overview
+## Objective
 
-You are an autonomous research agent improving an ARC-AGI-3 game solver.
-You ARE the reasoning engine — you call `play.py` CLI commands, read frames, and decide actions.
-Your goal: maximize **win_rate** and **avg_levels** across evaluation games.
+Play each game many times to discover its rules, then use that knowledge to win.
+The games have NO instructions by design — you must explore and learn.
+**Speed is critical.** The faster you play, the faster you learn.
+
+## The Loop
+
+```
+FOREVER:
+  1. Pick a game (rotate between games, or focus on one)
+  2. Open scorecard, reset game
+  3. PLAY: take actions, observe frame changes
+     - After each action, note what changed (block moved? tile toggled? pattern rotated?)
+     - If you already know the rules, execute your strategy
+     - If exploring, try untested actions to discover mechanics
+  4. Game ends (WIN, GAME_OVER, or you decide to reset)
+  5. LEARN: update strategy.md with new discoveries
+     - What did each action do?
+     - What is the win condition?
+     - What patterns/corridors/objects exist?
+     - What sequence of actions makes progress?
+  6. Commit strategy.md if you learned something significant
+  7. Go to 1
+```
+
+## How to Play Fast
+
+- **Use `seq` for known sequences.** If you know UUUULLLL works, run it in one call.
+- **Use individual actions for exploration.** When learning, take one action, read the frame diff, decide the next.
+- **Don't render full frames.** Filter for the rows that matter (where objects are, where changes happen).
+- **Track positions numerically.** Use block/cross coordinates, not visual inspection.
+- **Reset freely.** Timer expired? Fine — you learned something. Reset and try a different path.
+- **Parallelize exploration.** Try different routes in separate game sessions.
+
+## What to Record in strategy.md
+
+For each game, build up knowledge:
+
+```
+### Game: <id>
+**Actions**: what each action does
+**Objects**: what's on the grid, what moves, what's fixed
+**Win condition**: what triggers level completion
+**Level N strategy**: specific action sequence or approach
+**Corridors/paths**: where you can and can't go
+**Traps**: what causes GAME_OVER, what wastes time
+```
 
 ## Files
 
-- **CAN modify**: `strategy.md` (your game-playing strategy — the main thing to iterate on)
-- **CAN modify**: `play.py` (frame rendering, CLI interface — rarely needs changes)
-- **CANNOT modify**: `program.md`
+- **strategy.md** — Your accumulated knowledge. THE key artifact. Update constantly.
+- **play.py** — CLI tool. Modify if you need better frame analysis or new commands.
+- **program.md** — This file. Do not modify.
 
-## Setup (do once at start)
+## Playing Multiple Games
 
-1. Confirm `ARC_API_KEY` is set
-2. Create branch: `git checkout -b autoresearch/<tag>` (e.g. `autoresearch/mar13`)
-3. Read all files: this file, `strategy.md`, `play.py`
-4. Initialize `results.tsv` with header:
-   ```
-   commit	win_rate	avg_levels	games	status	description
-   ```
-5. List games: `uv run play.py games`
-6. Pick EVAL_GAMES (start with 3-5 games)
-7. Run baseline evaluation (see "Playing Games" below)
-8. Record baseline in `results.tsv`
+Three games available: LS20, VC33, FT09. Each is different:
+- Some use directional movement (ACTION1-4)
+- Some use clicks (ACTION6)
+- Some use both
 
-## Playing Games
+Rotate between games. If stuck on one, try another. Cross-game patterns may transfer.
 
-For each evaluation round, play the same set of games:
+## Frame Analysis Tips
 
-```
-1. uv run play.py scorecard-open                    → get card_id
-2. For each game in eval set:
-   a. uv run play.py reset <game_id> <card_id>      → get guid, see frame
-   b. Read strategy.md, reason about the frame
-   c. uv run play.py action <CMD> <game_id> <guid>  → see new frame
-   d. Repeat (c) until state=WIN or state=GAME_OVER (max 200 steps)
-   e. Record: game_id, levels_completed, state, steps
-3. uv run play.py scorecard-close <card_id>          → get summary
-4. Compute win_rate and avg_levels
-```
-
-## Experiment Loop (repeat forever)
-
-```
-1. Look at results.tsv to understand current performance
-2. Analyze: which games did you lose? Why? What patterns did you miss?
-3. Form a hypothesis for improvement
-4. Update strategy.md with new insights/approach
-5. git commit -am "description of change"
-6. Play the same eval games again (see "Playing Games")
-7. Record in results.tsv:
-   commit  win_rate  avg_levels  games  status  description
-8. If win_rate improved (or equal but higher avg_levels): KEEP
-9. If worse: git reset --hard HEAD~1
-10. Go to step 1
-```
-
-## Metrics
-
-Print after each evaluation round:
-```
-win_rate:    0.4000
-avg_levels:  15.60
-```
-
-## What to Iterate On
-
-The main lever is `strategy.md`. Improve it by:
-- Adding game-type-specific strategies you discover
-- Refining the exploration approach
-- Adding pattern recognition heuristics
-- Recording what action sequences work for what situations
-- Noting common failure modes and how to avoid them
-
-You can also modify `play.py` if the frame rendering needs improvement.
-
-## Simplicity Principle
-
-- Small improvement from deleting strategy text? Keep!
-- Small improvement from a page of hacky heuristics? Skip.
-- Equal results but cleaner strategy? Definitely keep.
+- Compare frames before/after each action to understand what changed
+- Hash frames (excluding timer rows) to detect true state changes vs timer-only changes
+- Count pixels changed: 0-2 = wall hit, ~50 = normal move, ~100+ = special event (overlap, pickup, level transition)
+- 1000+ pixels changed = level transition
 
 ## NEVER STOP
 
-Once the loop begins, keep going indefinitely. The human might be sleeping.
+Once the loop begins, keep playing indefinitely. The human might be sleeping.
+Every play teaches you something. Even failed attempts build knowledge.
