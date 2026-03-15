@@ -236,16 +236,21 @@ export default function Dashboard() {
   return (
     <main className="min-h-screen bg-white">
       <div className="max-w-[1120px] mx-auto px-6 py-12">
-        <header className="mb-12">
-          <h1 className="text-[28px] font-semibold tracking-tight text-[#1d1d1f]">
-            ARC-AGI
-          </h1>
-          <p className="text-[15px] text-[#86868b] mt-1">
-            {statuses.length === 0
-              ? "No active experiments"
-              : `${statuses.length} experiment${statuses.length !== 1 ? "s" : ""}${running > 0 ? ` \u00b7 ${running} running` : ""}`
-            }
-          </p>
+        <header className="mb-12 flex items-start justify-between">
+          <div>
+            <h1 className="text-[28px] font-semibold tracking-tight text-[#1d1d1f]">
+              ARC-AGI
+            </h1>
+            <p className="text-[15px] text-[#86868b] mt-1">
+              {statuses.length === 0
+                ? "No active experiments"
+                : `${statuses.length} experiment${statuses.length !== 1 ? "s" : ""}${running > 0 ? ` \u00b7 ${running} running` : ""}`
+              }
+            </p>
+          </div>
+          <span className="text-[15px] font-mono text-[#86868b] mt-1">
+            {statuses.reduce((sum, s) => sum + (s.frames?.length || 0), 0)} actions
+          </span>
         </header>
 
         {statuses.length === 0 ? (
@@ -271,7 +276,7 @@ export default function Dashboard() {
                         {s.game_id}
                         <span className="text-[11px] text-[#86868b] ml-1.5">{s.guid.slice(0, 8)}</span>
                       </span>
-                      <StatePill state={s.state} />
+                      <span className={`text-[11px] font-mono ${Date.now() / 1000 - s.updated_at < 60 ? "text-green-500" : "text-[#86868b]"}`}>{timeSince(s.updated_at)}</span>
                     </div>
 
                     <p className="text-[13px] text-[#6e6e73] leading-relaxed line-clamp-2 mt-2">
@@ -286,8 +291,6 @@ export default function Dashboard() {
 
                     <div className="flex items-center gap-2 text-[12px] text-[#86868b] mt-auto pt-3">
                       <span>Level {s.levels_completed}</span>
-                      <span className="text-[#d2d2d7]">/</span>
-                      <span>{timeSince(s.updated_at)}</span>
                     </div>
                   </div>
                 </div>
