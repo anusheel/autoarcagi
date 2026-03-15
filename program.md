@@ -8,59 +8,35 @@ No instructions — learn by playing.
 You play directly by calling play.py functions from the shell. Think between each shell invocation — read the output before acting again.
 
 ```
-FOREVER:
-  1. Read strategy.md (use the Read tool). Paste key facts into your thinking.
+EVERY CYCLE:
+  1. Read strategy.md (Read tool). Paste key facts into your thinking.
      If you skip this step, everything after is wasted.
   2. State a hypothesis OUT LOUD before touching the game.
   3. Take 1-3 actions to test it. Read the output. Think.
-  4. Update strategy.md with what you learned (use the Edit tool).
+  4. Update strategy.md with what you learned (Edit tool).
      Do this BEFORE moving on to the next hypothesis.
 
-  HARD RULES (non-negotiable):
-  - Never run more than 3 act()/seq() calls in a single shell command.
-    NEVER chain moves like `for m in 'UUULLLD'`. Each shell invocation
-    calls act() at most 3 times.
-  - You MUST read strategy.md (Read tool) before every cycle.
-  - You MUST write to strategy.md (Edit tool) after every cycle.
-  - If you haven't updated strategy.md in your last 3 messages, STOP
-    and update it NOW. Do not take another game action.
-  - Never open a new scorecard without first recording what you learned
-    from the current one in strategy.md.
-
-  WARNING SIGNS (if any are true, stop and write strategy.md):
-  - You've run >5 game actions without writing to strategy.md.
-  - You opened a new scorecard without recording learnings.
-  - You're looping through positions without a stated hypothesis.
-  - You're running the same experiment you ran 10 minutes ago.
-
-  EVERY ~10 TOTAL GAME ACTIONS (count them), or after completing/failing:
-  5. REFLECT — stop playing and score yourself on each dimension:
-
-     PROCESS: Did I follow the cycle (read strategy → hypothesize → act →
-     write strategy)? Where did I cut corners?
-
-     ACTION ECONOMY: How many actions taught me something new vs. were
-     wasted repeats? What was my best and worst action?
-
-     ASSUMPTIONS: What did I treat as obvious without testing? What was
-     the costliest wrong assumption?
-
-     EXPLORATION: What objects, areas, or actions did I NOT try? Why did
-     I avoid them?
-
-     STUCK DETECTION: When I stopped making progress, how many actions
-     did it take me to change approach? What signal should have told me
-     sooner?
-
-     TOOLS: Am I doing repetitive work by hand that a helper function
-     could automate?
-
-     For each dimension, note one concrete change to make going forward.
-
+EVERY ~10 ACTIONS (or after completing/failing a level):
+  5. REFLECT — score yourself on each Self-Reflection dimension below.
+     For each, note one concrete change to make going forward.
   6. Update play.py AND this file. program.md changes should be GENERIC
      principles (not game-specific). Game-specific notes go in strategy.md.
   7. Git commit and push any changes to program.md, play.py, or strategy.md.
      Commit message = one-line reason for the change.
+
+HARD RULES (non-negotiable):
+  - Max 3 act()/seq() calls per shell command. NEVER chain moves.
+  - You MUST read strategy.md before every cycle.
+  - You MUST write to strategy.md after every cycle.
+  - If you haven't updated strategy.md in your last 3 messages, STOP
+    and update it NOW.
+  - Never open a new scorecard without recording learnings first.
+
+WARNING SIGNS (if any are true, stop and write strategy.md):
+  - You've run >5 game actions without writing to strategy.md.
+  - You opened a new scorecard without recording learnings.
+  - You're looping through positions without a stated hypothesis.
+  - You're running the same experiment you ran 10 minutes ago.
 ```
 
 ## Principles
