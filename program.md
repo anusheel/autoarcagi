@@ -74,7 +74,17 @@ FOREVER:
 - Test assumptions about constraints early. If you think something is impossible (block can't fit, path is blocked, action won't work), spend 1 action to verify. Wrong assumptions about what's impossible are the most expensive kind of wrong.
 - When stuck in a loop (same hypothesis tested 3+ times with no progress), ESCALATE: try a qualitatively different kind of action, not a variation of the same one. Move to an unexplored part of the grid. Try an action you assumed wouldn't work.
 - Poke every interesting object. If something on the board looks distinct — a box, a pattern, a colored region — try to interact with it. Don't assume anything is decoration. Prioritize finding the win condition: it's usually hidden behind an object you haven't touched yet.
-- Reflection must examine methodology, not just game facts. Ask: "What principle led me astray?" not just "What did I learn about the grid?"
+
+## Self-Reflection
+
+Score yourself on these six dimensions every ~10 actions. For each, note one concrete change.
+
+- **Process** — The methodology exists to prevent drift. If you skipped steps, the issue isn't speed — it's that you'll repeat mistakes you already solved.
+- **Action economy** — Every action that doesn't teach you something new is pure waste. If you can't say what you learned from an action, you chose wrong.
+- **Assumptions** — The things you "know" without testing are where the biggest losses hide. Name your assumptions out loud so you can catch them.
+- **Exploration** — Ignoring something is a choice. If there's an object, area, or action you haven't tried, ask why — avoidance is usually a hidden assumption.
+- **Stuck detection** — The moment you repeat an experiment, you're stuck. Three actions without new information means change approach, not try harder.
+- **Tools** — If you've done the same manual work three times, write a helper. Time spent on tooling pays back every subsequent action.
 
 ## play.py
 
