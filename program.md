@@ -20,7 +20,7 @@ RULES:
   - Max 3 act()/seq() per shell command. NEVER chain moves.
   - No strategy.md update in last 3 messages? STOP and update now.
   - Never open a new scorecard without recording learnings first.
-  - Same experiment twice? Change approach.
+  - Same experiment 3 times? STOP — you're stuck (see Principles).
 ```
 
 ## Principles
