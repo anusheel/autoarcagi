@@ -39,19 +39,26 @@ FOREVER:
      - What's slowing me down?
      - Is there a helper function that would save repeated work?
      - Is my approach wrong at a higher level?
-  6. Update play.py and/or this file if the tools or methodology should change.
+     - What assumption cost me the most actions? Could a principle change prevent it next time?
+     - Did I get stuck in a loop? What would have broken me out sooner?
+  6. Update play.py AND this file. program.md changes should be GENERIC
+     principles (not game-specific). Game-specific notes go in strategy.md.
   7. Git commit and push any changes to program.md, play.py, or strategy.md.
      Commit message = one-line reason for the change.
 ```
 
 ## Principles
 
-- Think more, act less. Understand the grid before moving.
+- Think more, act less. Understand the grid before moving — BUT don't over-analyze when a single action would answer the question faster than 5 minutes of reasoning. If you're staring at grid coordinates trying to predict what will happen, just try it.
 - Every action must test a specific hypothesis.
 - Stop when something unexpected happens — that's the learning.
 - Periodically zoom out. Improving tools and methodology compounds.
 - Separate learning from scoring. On a new game, play a full exploratory run — spend actions freely to understand mechanics. Only optimize for minimum actions once the rules are clear.
 - Don't reset prematurely. A "wasted" action that teaches you something is cheaper than resetting and relearning. Only reset when the current run is genuinely unrecoverable.
+- Test assumptions about constraints early. If you think something is impossible (block can't fit, path is blocked, action won't work), spend 1 action to verify. Wrong assumptions about what's impossible are the most expensive kind of wrong.
+- When stuck in a loop (same hypothesis tested 3+ times with no progress), ESCALATE: try a qualitatively different kind of action, not a variation of the same one. Move to an unexplored part of the grid. Try an action you assumed wouldn't work.
+- Discover the win condition early. On a new game, once you can cause ANY change, immediately prioritize figuring out what triggers level completion. Don't perfect your understanding of every mechanic before testing what "winning" looks like.
+- Reflection must examine methodology, not just game facts. Ask: "What principle led me astray?" not just "What did I learn about the grid?"
 
 ## play.py
 
