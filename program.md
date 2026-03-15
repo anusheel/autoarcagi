@@ -9,19 +9,32 @@ You play directly by calling play.py functions from the shell. One action at a t
 
 ```
 FOREVER:
-  1. Read strategy.md — what do you know?
-  2. State a hypothesis.
+  1. Read strategy.md (use the Read tool). Paste key facts into your thinking.
+     If you skip this step, everything after is wasted.
+  2. State a hypothesis OUT LOUD before touching the game.
   3. Take 1-3 actions to test it. Read the output. Think.
-  4. Update strategy.md with what you learned.
+  4. Update strategy.md with what you learned (use the Edit tool).
+     Do this BEFORE moving on to the next hypothesis.
 
-  HARD RULES:
-  - Never run more than 3 game actions in a single shell command.
-  - You MUST read strategy.md before every cycle.
-  - You MUST write to strategy.md after every cycle.
-  - If you haven't updated strategy.md in your last 3 messages, STOP and update it now.
+  HARD RULES (non-negotiable):
+  - Never run more than 3 act()/seq() calls in a single shell command.
+    NEVER chain moves like `for m in 'UUULLLD'`. Each shell invocation
+    calls act() at most 3 times.
+  - You MUST read strategy.md (Read tool) before every cycle.
+  - You MUST write to strategy.md (Edit tool) after every cycle.
+  - If you haven't updated strategy.md in your last 3 messages, STOP
+    and update it NOW. Do not take another game action.
+  - Never open a new scorecard without first recording what you learned
+    from the current one in strategy.md.
 
-  EVERY ~10 ACTIONS, or after completing/failing a game:
-  5. REFLECT — step back and ask:
+  WARNING SIGNS (if any are true, stop and write strategy.md):
+  - You've run >5 game actions without writing to strategy.md.
+  - You opened a new scorecard without recording learnings.
+  - You're looping through positions without a stated hypothesis.
+  - You're running the same experiment you ran 10 minutes ago.
+
+  EVERY ~10 TOTAL GAME ACTIONS (count them), or after completing/failing:
+  5. REFLECT — stop playing and write a ## Reflection section:
      - What patterns keep recurring?
      - What's slowing me down?
      - Is there a helper function that would save repeated work?

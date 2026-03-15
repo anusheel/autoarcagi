@@ -11,9 +11,19 @@ import httpx
 
 BASE = "https://three.arcprize.org"
 KEY = os.environ["ARC_API_KEY"]
+COOKIE_FILE = Path(__file__).parent / ".arc_session.json"
 SESSION = httpx.Client(timeout=60)
 ACTION_MAP = {"U": "ACTION1", "D": "ACTION2", "L": "ACTION3", "R": "ACTION4",
               "S": "ACTION5", "X": "ACTION6"}
+
+# Restore cookies from previous invocations
+if COOKIE_FILE.exists():
+    try:
+        for name, value in json.loads(COOKIE_FILE.read_text()).items():
+            if value and value != "_remove_":
+                SESSION.cookies.set(name, value)
+    except Exception:
+        pass
 
 
 # ── Core API ─────────────────────────────────────────────────────────
@@ -29,6 +39,11 @@ def api(method, path, body=None):
             continue
         r.raise_for_status()
         data = r.json()
+        # Persist cookies for cross-invocation state
+        try:
+            COOKIE_FILE.write_text(json.dumps({n: v for n, v in SESSION.cookies.items()}))
+        except Exception:
+            pass
         _status.update(body, data)
         return data
     r.raise_for_status()
@@ -48,24 +63,29 @@ def reset(game_id, card_id, guid=None):
     return api("POST", "/api/cmd/RESET", {"game_id": game_id, "card_id": card_id, "guid": guid})
 
 
-def act(action_cmd, game_id, guid, x=None, y=None):
+def act(action_cmd, game_id, guid, card_id=None, x=None, y=None):
     """Single action (U/D/L/R/S/X or ACTION1-6). Returns obs dict."""
     if action_cmd in ACTION_MAP:
         action_cmd = ACTION_MAP[action_cmd]
     body = {"game_id": game_id, "guid": guid}
+    if card_id:
+        body["card_id"] = card_id
     if x is not None and y is not None:
         body["x"], body["y"] = int(x), int(y)
     return api("POST", f"/api/cmd/{action_cmd}", body)
 
 
-def seq(game_id, guid, moves):
+def seq(game_id, guid, moves, card_id=None):
     """Execute a move string (e.g. 'UUULLDR'). Returns final obs only."""
     obs = None
     for m in moves.upper():
         cmd = ACTION_MAP.get(m)
         if not cmd:
             continue
-        obs = api("POST", f"/api/cmd/{cmd}", {"game_id": game_id, "guid": guid})
+        body = {"game_id": game_id, "guid": guid}
+        if card_id:
+            body["card_id"] = card_id
+        obs = api("POST", f"/api/cmd/{cmd}", body)
         if obs.get("state") in ("WIN", "GAME_OVER"):
             break
     return obs
