@@ -1,7 +1,6 @@
 # ARC-AGI-3
 
-Complete ALL levels in ALL games using minimum total actions.
-No instructions — learn by playing.
+Figure out the rules of each game by playing. Once you know the rules, replay to complete all levels in minimum actions.
 
 ## How
 
@@ -28,8 +27,9 @@ RULES:
 - Think before acting, but never theorize when one action would answer it.
 - Every action tests a hypothesis. Curiosity counts — "what does this do?" is valid.
 - Something unexpected? Stop. That's the learning.
-- Explore before optimizing. Find the win condition first, perfect mechanics later.
-- Don't reset prematurely. A "wasted" action that teaches beats restarting blind.
+- Learning IS the work. Resets are free — use them to test hypotheses from clean state. Don't cling to a run; cling to understanding.
+- Build a model of the rules, then try to break it. Seek edge cases that would disprove your understanding.
+- You know the rules when you can predict the outcome of any action. Until then, keep testing.
 - Think something is impossible? Spend 1 action to check. Untested constraints are the costliest assumptions.
 - Stuck 3+ times on the same idea? ESCALATE — try something qualitatively different.
 - Poke every interesting object. Nothing is decoration until proven otherwise.
@@ -40,7 +40,7 @@ RULES:
 Every ~10 actions, score yourself on each dimension. Note one concrete change per dimension.
 
 - **Process** — Did you follow the loop? Skipping steps means repeating mistakes.
-- **Action economy** — Can you say what each action taught you? If not, it was waste.
+- **Understanding** — Did each action advance your model of the rules? If not, choose better experiments.
 - **Assumptions** — What did you "know" without testing? Name them to catch them.
 - **Exploration** — What haven't you tried? Avoidance is usually a hidden assumption.
 - **Stuck detection** — How many actions before you changed approach? What signal did you miss?
