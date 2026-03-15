@@ -58,6 +58,7 @@ FOREVER:
 - Test assumptions about constraints early. If you think something is impossible (block can't fit, path is blocked, action won't work), spend 1 action to verify. Wrong assumptions about what's impossible are the most expensive kind of wrong.
 - When stuck in a loop (same hypothesis tested 3+ times with no progress), ESCALATE: try a qualitatively different kind of action, not a variation of the same one. Move to an unexplored part of the grid. Try an action you assumed wouldn't work.
 - Discover the win condition early. On a new game, once you can cause ANY change, immediately prioritize figuring out what triggers level completion. Don't perfect your understanding of every mechanic before testing what "winning" looks like.
+- Poke every interesting object. If something on the board looks distinct — a box, a pattern, a colored region — try to interact with it. Don't assume anything is decoration. The thing you ignore is usually the thing you needed.
 - Reflection must examine methodology, not just game facts. Ask: "What principle led me astray?" not just "What did I learn about the grid?"
 
 ## play.py
