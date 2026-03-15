@@ -126,7 +126,10 @@ def result(msg):
     _status.result_msg = msg
 
 
-# ── Dashboard status tracking ────────────────────────────────────────
+# ── Custom helpers (add your own below) ───────────────────────────────
+
+
+# ── Dashboard status tracking (do not edit) ──────────────────────────
 
 STATUS_DIR = Path(__file__).parent / "status"
 

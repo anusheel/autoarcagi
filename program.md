@@ -14,6 +14,12 @@ FOREVER:
   3. Take 1-3 actions to test it. Read the output. Think.
   4. Update strategy.md with what you learned.
 
+  HARD RULES:
+  - Never run more than 3 game actions in a single shell command.
+  - You MUST read strategy.md before every cycle.
+  - You MUST write to strategy.md after every cycle.
+  - If you haven't updated strategy.md in your last 3 messages, STOP and update it now.
+
   EVERY ~10 ACTIONS, or after completing/failing a game:
   5. REFLECT — step back and ask:
      - What patterns keep recurring?
@@ -31,10 +37,14 @@ FOREVER:
 - Every action must test a specific hypothesis.
 - Stop when something unexpected happens — that's the learning.
 - Periodically zoom out. Improving tools and methodology compounds.
+- Separate learning from scoring. On a new game, play a full exploratory run — spend actions freely to understand mechanics. Only optimize for minimum actions once the rules are clear.
+- Don't reset prematurely. A "wasted" action that teaches you something is cheaper than resetting and relearning. Only reset when the current run is genuinely unrecoverable.
 
 ## play.py
 
 Call functions directly: `source .env && uv run python -c "from play import *; ..."`
+
+**State persistence:** Python state resets between invocations. After calling `start()`, capture `card_id`, `guid`, and `game_id` from the output. Pass them as literals in all subsequent `act()`/`seq()`/`reset()` calls.
 
 | Function | Purpose |
 |---|---|
