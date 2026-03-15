@@ -5,54 +5,52 @@ No instructions — learn by playing.
 
 ## How
 
-You play directly by calling play.py functions from the shell. Think between each shell invocation — read the output before acting again.
+Play by calling play.py functions from the shell. Think between each invocation.
 
 ```
 LOOP:
-  1. Read strategy.md (Read tool). Paste key facts into your thinking.
-  2. State a hypothesis OUT LOUD before touching the game.
-  3. Take 1-3 actions to test it. Read the output. Think.
-  4. Update strategy.md with what you learned (Edit tool).
-  5. Every ~10 actions (or after completing/failing a level):
-     REFLECT using the Self-Reflection dimensions below, then update
-     play.py and program.md (generic only — game notes go in strategy.md),
-     then git commit and push.
+  1. Read strategy.md. Paste key facts into your thinking.
+  2. State hypothesis OUT LOUD.
+  3. Take 1-3 actions to test it. Read output. Think.
+  4. Update strategy.md with what you learned.
+  5. Every ~10 actions or after completing/failing: REFLECT (see below),
+     update play.py and program.md (generic only), commit and push.
 
 RULES:
-  - Max 3 act()/seq() calls per shell command. NEVER chain moves.
-  - If you haven't updated strategy.md in your last 3 messages, STOP.
+  - Max 3 act()/seq() per shell command. NEVER chain moves.
+  - No strategy.md update in last 3 messages? STOP and update now.
   - Never open a new scorecard without recording learnings first.
-  - If you're looping (same experiment twice), change approach.
+  - Same experiment twice? Change approach.
 ```
 
 ## Principles
 
-- Prefer thinking to acting — but never reason about what an action will do when you could just try it. Analysis is for choosing WHICH action; the game itself is faster than prediction.
-- Every action must test a specific hypothesis. "What does this object do?" counts — curiosity about an unexplored object is a valid hypothesis.
-- Stop when something unexpected happens — that's the learning.
-- Periodically zoom out. Improving tools and methodology compounds.
-- On a new game, explore before optimizing. Spend actions freely to discover the win condition and core mechanics. Only minimize actions once the rules are clear.
-- Don't reset prematurely. A "wasted" action that teaches you something is cheaper than resetting and relearning. Only reset when the current run is genuinely unrecoverable.
-- Test assumptions about constraints early. If you think something is impossible (block can't fit, path is blocked, action won't work), spend 1 action to verify. Wrong assumptions about what's impossible are the most expensive kind of wrong.
-- When stuck in a loop (same hypothesis tested 3+ times with no progress), ESCALATE: try a qualitatively different kind of action, not a variation of the same one. Move to an unexplored part of the grid. Try an action you assumed wouldn't work.
-- Poke every interesting object. If something on the board looks distinct — a box, a pattern, a colored region — try to interact with it. Don't assume anything is decoration. Prioritize finding the win condition: it's usually hidden behind an object you haven't touched yet.
+- Think before acting, but never theorize when one action would answer it.
+- Every action tests a hypothesis. Curiosity counts — "what does this do?" is valid.
+- Something unexpected? Stop. That's the learning.
+- Explore before optimizing. Find the win condition first, perfect mechanics later.
+- Don't reset prematurely. A "wasted" action that teaches beats restarting blind.
+- Think something is impossible? Spend 1 action to check. Untested constraints are the costliest assumptions.
+- Stuck 3+ times on the same idea? ESCALATE — try something qualitatively different.
+- Poke every interesting object. Nothing is decoration until proven otherwise.
+- Zoom out periodically. Better tools and methodology compound.
 
 ## Self-Reflection
 
-Score yourself on these six dimensions every ~10 actions. For each, note one concrete change.
+Every ~10 actions, score yourself on each dimension. Note one concrete change per dimension.
 
-- **Process** — The methodology exists to prevent drift. If you skipped steps, the issue isn't speed — it's that you'll repeat mistakes you already solved.
-- **Action economy** — Every action that doesn't teach you something new is pure waste. If you can't say what you learned from an action, you chose wrong.
-- **Assumptions** — The things you "know" without testing are where the biggest losses hide. Name your assumptions out loud so you can catch them.
-- **Exploration** — Ignoring something is a choice. If there's an object, area, or action you haven't tried, ask why — avoidance is usually a hidden assumption.
-- **Stuck detection** — The moment you repeat an experiment, you're stuck. Three actions without new information means change approach, not try harder.
-- **Tools** — If you've done the same manual work three times, write a helper. Time spent on tooling pays back every subsequent action.
+- **Process** — Did you follow the loop? Skipping steps means repeating mistakes.
+- **Action economy** — Can you say what each action taught you? If not, it was waste.
+- **Assumptions** — What did you "know" without testing? Name them to catch them.
+- **Exploration** — What haven't you tried? Avoidance is usually a hidden assumption.
+- **Stuck detection** — How many actions before you changed approach? What signal did you miss?
+- **Tools** — Done the same thing 3 times by hand? Write a helper.
 
 ## play.py
 
-Call functions directly: `source .env && uv run python -c "from play import *; ..."`
+`source .env && uv run python -c "from play import *; ..."`
 
-**State persistence:** Python state resets between invocations. After calling `start()`, capture `card_id`, `guid`, and `game_id` from the output. Pass them as literals in all subsequent `act()`/`seq()`/`reset()` calls.
+State resets between invocations. Capture `card_id`, `guid`, `game_id` from `start()` and pass as literals.
 
 | Function | Purpose |
 |---|---|
