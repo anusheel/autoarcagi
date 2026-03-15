@@ -5,7 +5,7 @@ No instructions — learn by playing.
 
 ## How
 
-You play directly by calling play.py functions from the shell. One action at a time. Think between each action.
+You play directly by calling play.py functions from the shell. Think between each shell invocation — read the output before acting again.
 
 ```
 FOREVER:
@@ -49,16 +49,15 @@ FOREVER:
 
 ## Principles
 
-- Think more, act less. Understand the grid before moving — BUT don't over-analyze when a single action would answer the question faster than 5 minutes of reasoning. If you're staring at grid coordinates trying to predict what will happen, just try it.
-- Every action must test a specific hypothesis.
+- Prefer thinking to acting — but never reason about what an action will do when you could just try it. Analysis is for choosing WHICH action; the game itself is faster than prediction.
+- Every action must test a specific hypothesis. "What does this object do?" counts — curiosity about an unexplored object is a valid hypothesis.
 - Stop when something unexpected happens — that's the learning.
 - Periodically zoom out. Improving tools and methodology compounds.
-- Separate learning from scoring. On a new game, play a full exploratory run — spend actions freely to understand mechanics. Only optimize for minimum actions once the rules are clear.
+- On a new game, explore before optimizing. Spend actions freely to discover the win condition and core mechanics. Only minimize actions once the rules are clear.
 - Don't reset prematurely. A "wasted" action that teaches you something is cheaper than resetting and relearning. Only reset when the current run is genuinely unrecoverable.
 - Test assumptions about constraints early. If you think something is impossible (block can't fit, path is blocked, action won't work), spend 1 action to verify. Wrong assumptions about what's impossible are the most expensive kind of wrong.
 - When stuck in a loop (same hypothesis tested 3+ times with no progress), ESCALATE: try a qualitatively different kind of action, not a variation of the same one. Move to an unexplored part of the grid. Try an action you assumed wouldn't work.
-- Discover the win condition early. On a new game, once you can cause ANY change, immediately prioritize figuring out what triggers level completion. Don't perfect your understanding of every mechanic before testing what "winning" looks like.
-- Poke every interesting object. If something on the board looks distinct — a box, a pattern, a colored region — try to interact with it. Don't assume anything is decoration. The thing you ignore is usually the thing you needed.
+- Poke every interesting object. If something on the board looks distinct — a box, a pattern, a colored region — try to interact with it. Don't assume anything is decoration. Prioritize finding the win condition: it's usually hidden behind an object you haven't touched yet.
 - Reflection must examine methodology, not just game facts. Ask: "What principle led me astray?" not just "What did I learn about the grid?"
 
 ## play.py
@@ -81,15 +80,3 @@ Call functions directly: `source .env && uv run python -c "from play import *; .
 | `answer_pattern(grid)` | Read 3x3 answer from lower-left box (2x scale) |
 | `target_pattern(grid)` | Find & read 3x3 target from reference box |
 | `level_status(obs)` | Print block pos, marker, answer vs target, resources |
-
-## ls20 Game Notes
-
-Level completion requires TWO things:
-1. Transform answer to match target by moving block ONTO the 0/1 marker (each hit = H-flip or V-flip, 4-hit cycle)
-2. Navigate block UP INTO the target reference box from below
-
-Workflow per level:
-1. `level_status(obs)` to see answer, target, marker, block position
-2. Determine how many marker hits needed (1 H-flip usually)
-3. Plan shortest path: start → marker → target box
-4. Execute, entering target box from below with final U move
