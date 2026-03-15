@@ -149,6 +149,76 @@ def result(msg):
 # ── Custom helpers (add your own below) ───────────────────────────────
 
 
+def answer_pattern(grid):
+    """Read the 3x3 answer pattern from the lower-left box (2x scale at rows 55-60, cols 3-8)."""
+    pattern = []
+    for rp in [(55, 56), (57, 58), (59, 60)]:
+        row = []
+        for cp in [(3, 4), (5, 6), (7, 8)]:
+            vals = [grid[r][c] for r in rp for c in cp]
+            row.append('9' if all(v == 9 for v in vals) else '.')
+        pattern.append(''.join(row))
+    return '/'.join(pattern)
+
+
+def target_pattern(grid):
+    """Find and read the 3x3 target pattern from a reference box (5-fill with 9-pattern)."""
+    # Find the 9s that are surrounded by 5s (the reference box interior)
+    nines = find_objects(grid, 9)
+    # Exclude 9s in the answer box (rows 53-62) and in the movable block
+    twelves = set((r, c) for r, c in find_objects(grid, 12))
+    ref_nines = []
+    for r, c in nines:
+        if r >= 53:
+            continue
+        # Check if any adjacent 12 (part of movable block)
+        if (r, c) in twelves or (r-1, c) in twelves or (r+1, c) in twelves:
+            continue
+        # Check if surrounded by 5s (reference box)
+        neighbors = [(r-1, c), (r+1, c), (r, c-1), (r, c+1)]
+        if any(0 <= nr < len(grid) and 0 <= nc < len(grid[0]) and grid[nr][nc] == 5
+               for nr, nc in neighbors):
+            ref_nines.append((r, c))
+    if not ref_nines:
+        return None
+    # Find bounding box of the 3x3 pattern
+    min_r, max_r = min(r for r, c in ref_nines), max(r for r, c in ref_nines)
+    min_c, max_c = min(c for r, c in ref_nines), max(c for r, c in ref_nines)
+    pattern = []
+    for r in range(min_r, max_r + 1):
+        row = []
+        for c in range(min_c, max_c + 1):
+            row.append('9' if grid[r][c] == 9 else '.')
+        pattern.append(''.join(row))
+    return '/'.join(pattern)
+
+
+def level_status(obs):
+    """Print a compact summary of current level state."""
+    grid = frame_to_grid(obs)
+    print(f"State: {obs.get('state')}  Levels: {obs.get('levels_completed')}/{obs.get('win_levels')}")
+    # Block position
+    c_pos = find_objects(grid, 12)
+    if c_pos:
+        print(f"Block c(12): rows {min(r for r,c in c_pos)}-{max(r for r,c in c_pos)}, "
+              f"cols {min(c for r,c in c_pos)}-{max(c for r,c in c_pos)}")
+    # Marker position
+    zeros = [(r, c) for r, c in find_objects(grid, 0) if 5 <= r <= 54 and 5 <= c <= 54]
+    ones = find_objects(grid, 1)
+    marker_cells = zeros + ones
+    # Filter to workspace markers (not box borders)
+    if marker_cells:
+        print(f"Marker 0s: {zeros}  1s: {ones}")
+    # Answer vs target
+    ans = answer_pattern(grid)
+    tgt = target_pattern(grid)
+    match = "MATCH" if ans == tgt else "MISMATCH"
+    print(f"Answer: {ans}  Target: {tgt}  [{match}]")
+    # Resources
+    b_count = len([(r, c) for r, c in find_objects(grid, 11) if r >= 60])
+    print(f"Resources: {b_count} b-cells ({b_count // 2} moves left)")
+
+
 # ── Dashboard status tracking (do not edit) ──────────────────────────
 
 STATUS_DIR = Path(__file__).parent / "status"

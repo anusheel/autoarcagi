@@ -70,3 +70,18 @@ Call functions directly: `source .env && uv run python -c "from play import *; .
 | `diff_frames(grid_a, grid_b)` | Dict of changed cells |
 | `grid_summary(grid)` | Value counts |
 | `render(frame_data)` | Text render of frame |
+| `answer_pattern(grid)` | Read 3x3 answer from lower-left box (2x scale) |
+| `target_pattern(grid)` | Find & read 3x3 target from reference box |
+| `level_status(obs)` | Print block pos, marker, answer vs target, resources |
+
+## ls20 Game Notes
+
+Level completion requires TWO things:
+1. Transform answer to match target by moving block ONTO the 0/1 marker (each hit = H-flip or V-flip, 4-hit cycle)
+2. Navigate block UP INTO the target reference box from below
+
+Workflow per level:
+1. `level_status(obs)` to see answer, target, marker, block position
+2. Determine how many marker hits needed (1 H-flip usually)
+3. Plan shortest path: start → marker → target box
+4. Execute, entering target box from below with final U move
