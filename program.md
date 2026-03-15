@@ -34,13 +34,29 @@ FOREVER:
   - You're running the same experiment you ran 10 minutes ago.
 
   EVERY ~10 TOTAL GAME ACTIONS (count them), or after completing/failing:
-  5. REFLECT — stop playing and write a ## Reflection section:
-     - What patterns keep recurring?
-     - What's slowing me down?
-     - Is there a helper function that would save repeated work?
-     - Is my approach wrong at a higher level?
-     - What assumption cost me the most actions? Could a principle change prevent it next time?
-     - Did I get stuck in a loop? What would have broken me out sooner?
+  5. REFLECT — stop playing and score yourself on each dimension:
+
+     PROCESS: Did I follow the cycle (read strategy → hypothesize → act →
+     write strategy)? Where did I cut corners?
+
+     ACTION ECONOMY: How many actions taught me something new vs. were
+     wasted repeats? What was my best and worst action?
+
+     ASSUMPTIONS: What did I treat as obvious without testing? What was
+     the costliest wrong assumption?
+
+     EXPLORATION: What objects, areas, or actions did I NOT try? Why did
+     I avoid them?
+
+     STUCK DETECTION: When I stopped making progress, how many actions
+     did it take me to change approach? What signal should have told me
+     sooner?
+
+     TOOLS: Am I doing repetitive work by hand that a helper function
+     could automate?
+
+     For each dimension, note one concrete change to make going forward.
+
   6. Update play.py AND this file. program.md changes should be GENERIC
      principles (not game-specific). Game-specific notes go in strategy.md.
   7. Git commit and push any changes to program.md, play.py, or strategy.md.
